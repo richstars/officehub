@@ -54,14 +54,24 @@ class FileController extends Controller
             'password' => 'nullable|required_if:is_secure,true|string|min:4',
         ]);
 
-        $path = $request->file('file')->store('files', 'public');
+        $file = $request->file('file');
+        $originalName = $file->getClientOriginalName();
+        // Sanitize filename but keep extension
+        $filename = pathinfo($originalName, PATHINFO_FILENAME);
+        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+        $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
+        
+        // Add timestamp to ensure uniqueness but keep original name recognizable
+        $storedFileName = time() . '_' . $safeName . '.' . $extension;
+        
+        $path = $file->storeAs('files', $storedFileName, 'public');
 
         File::create([
             'display_name' => $request->display_name,
             'category' => $request->category,
             'description' => $request->description,
             'file_path' => $path,
-            'size' => $request->file('file')->getSize(),
+            'size' => $file->getSize(),
             'is_secure' => $request->boolean('is_secure'),
             'password' => $request->boolean('is_secure') ? Hash::make($request->password) : null,
         ]);
@@ -82,7 +92,19 @@ class FileController extends Controller
         }
 
         if (Storage::disk('public')->exists($file->file_path)) {
-            return Storage::disk('public')->download($file->file_path, $file->display_name);
+            // Get the actual filename from storage path
+            $storageName = basename($file->file_path);
+            
+            // Remove the timestamp prefix we added during upload to get back the "original-like" name
+            // Pattern: numbers_ followed by rest.
+            $downloadName = preg_replace('/^\d+_/', '', $storageName);
+            
+            // Fallback if regex fails or something weird happens (shouldn't happen)
+            if (empty($downloadName)) {
+                $downloadName = $storageName;
+            }
+
+            return Storage::disk('public')->download($file->file_path, $downloadName);
         }
         
         return back()->with('error', 'File not found.');
