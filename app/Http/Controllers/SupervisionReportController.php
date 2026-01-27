@@ -45,8 +45,12 @@ class SupervisionReportController extends Controller
                     'locations' => $report->details->groupBy('airport_id')->map(function ($details) {
                         return [
                             'airport' => $details->first()->airport->name,
+                            'airport_id' => $details->first()->airport_id,
                             'airlines' => $details->map(function ($detail) {
-                                return $detail->airline->name;
+                                return [
+                                    'id' => $detail->airline->id,
+                                    'name' => $detail->airline->name,
+                                ];
                             })->values()->all(),
                         ];
                     })->values()->all(),

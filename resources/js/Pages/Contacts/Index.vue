@@ -264,7 +264,7 @@ const handlePhotoInput = (e) => {
                                         </div>
                                         <div>
                                             <div class="font-medium text-gray-900">{{ contact.name }}</div>
-                                            <!-- department removed -->
+                                            <div v-if="contact.employee_id" class="text-xs text-gray-500 font-mono mt-0.5">ID: {{ contact.employee_id }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -315,6 +315,7 @@ const handlePhotoInput = (e) => {
                             <span v-else>{{ contact.name.charAt(0) }}</span>
                         </div>
                         <h3 class="font-bold text-gray-900 text-lg truncate w-full">{{ contact.name }}</h3>
+                        <p v-if="contact.employee_id" class="text-xs text-gray-400 font-mono mb-1">{{ contact.employee_id }}</p>
                         <p class="text-blue-500 text-xs font-semibold uppercase tracking-wider mb-4">{{ contact.position }}</p>
                         
                         <div class="mt-auto w-full grid grid-cols-2 gap-2">
@@ -466,6 +467,16 @@ const handlePhotoInput = (e) => {
                              <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Contact Information</h4>
                              
                              <div class="space-y-6">
+                                <div v-if="selectedContact?.employee_id" class="flex items-start gap-4">
+                                     <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 flex-shrink-0">
+                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" /></svg>
+                                     </div>
+                                     <div>
+                                         <p class="text-xs font-bold text-gray-400 mb-0.5">Employee ID</p>
+                                         <p class="text-sm font-semibold text-gray-900 font-mono">{{ selectedContact?.employee_id }}</p>
+                                     </div>
+                                </div>
+
                                 <div class="flex items-start gap-4">
                                      <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
                                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>

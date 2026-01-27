@@ -15,6 +15,8 @@ const props = defineProps({
 });
 
 const searchQuery = ref('');
+const selectedAirport = ref('All');
+const selectedAirline = ref('All');
 const showUploadModal = ref(false);
 const isDragging = ref(false);
 
@@ -43,19 +45,91 @@ const form = useForm({
     ],
 });
 
+// Computed Stats based on Filtered Reports
+const computedAirportStats = computed(() => {
+    const stats = {};
+    filteredReports.value.forEach(report => {
+        report.locations.forEach(loc => {
+            // Count this airport ONLY if the location contains the selected airline (or All airlines)
+            const airlineMatch = selectedAirline.value === 'All' || loc.airlines.some(a => a.id === selectedAirline.value);
+            
+            if (airlineMatch) {
+                if (!stats[loc.airport]) stats[loc.airport] = 0;
+                stats[loc.airport]++;
+            }
+        });
+    });
+
+    let results = Object.entries(stats)
+        .map(([name, count]) => ({ name, count }));
+
+    // If a specific airport is selected, show ONLY that airport
+    if (selectedAirport.value !== 'All') {
+        const targetAirport = props.airports.find(a => a.id === selectedAirport.value);
+        if (targetAirport) {
+            results = results.filter(r => r.name === targetAirport.name);
+        } else {
+            results = [];
+        }
+    }
+
+    return results.sort((a, b) => b.count - a.count);
+});
+
+const computedAirlineStats = computed(() => {
+    const stats = {};
+    filteredReports.value.forEach(report => {
+        report.locations.forEach(loc => {
+             // Count airlines in this location ONLY if the location matches the selected airport (or All airports)
+            const airportMatch = selectedAirport.value === 'All' || loc.airport_id === selectedAirport.value;
+            
+            if (airportMatch) {
+                loc.airlines.forEach(airline => {
+                    // We will filter by Selected Airline at the end to show only one, 
+                    // but for now we aggregate relevant airlines found in legitimate locations.
+                    if (!stats[airline.name]) stats[airline.name] = 0;
+                    stats[airline.name]++;
+                });
+            }
+        });
+    });
+    
+    let results = Object.entries(stats)
+        .map(([name, count]) => {
+            const airlineObj = props.airlines.find(a => a.name === name);
+            return { 
+                name, 
+                count, 
+                color: airlineObj?.color || '#3b82f6' 
+            };
+        });
+
+    // If a specific airline is selected, show ONLY that airline
+    if (selectedAirline.value !== 'All') {
+         const targetAirline = props.airlines.find(a => a.id === selectedAirline.value);
+         if (targetAirline) {
+             results = results.filter(r => r.name === targetAirline.name);
+         } else {
+             results = [];
+         }
+    }
+
+    return results.sort((a, b) => b.count - a.count);
+});
+
 // Chart Configuration
 const airportChartOptions = computed(() => ({
     chart: { type: 'bar', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
     plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '60%' } },
     dataLabels: { enabled: false },
     xaxis: { 
-        categories: props.airportStats.map(s => s.name),
+        categories: computedAirportStats.value.map(s => s.name),
         labels: { 
             style: { colors: '#64748b' },
-            formatter: (val) => Math.floor(val) // Force integers
+            formatter: (val) => Math.floor(val) 
         },
         forceNiceScale: true,
-        tickAmount: 5 // Limit ticks to avoid clutter but ensure integers
+        tickAmount: 5 
     },
     yaxis: { labels: { style: { colors: '#64748b', fontSize: '11px' } } },
     colors: ['#3b82f6'],
@@ -68,37 +142,36 @@ const airportChartOptions = computed(() => ({
 
 const airportSeries = computed(() => [{
     name: 'Frekuensi',
-    data: props.airportStats.map(s => s.count)
+    data: computedAirportStats.value.map(s => s.count)
 }]);
 
-// Airline Chart - Horizontal with Labels on Left
+// Airline Chart
 const airlineChartOptions = computed(() => ({
     chart: { type: 'bar', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
     plotOptions: { 
         bar: { 
             horizontal: true, 
             borderRadius: 4, 
-            barHeight: '70%', // increased height
+            barHeight: '70%', 
             distributed: true 
         } 
     },
-    dataLabels: { enabled: true, textAnchor: 'start', style: { colors: ['#fff'] }, offsetX: 0 }, // Enabled data labels for clarity inside bar
+    dataLabels: { enabled: true, textAnchor: 'start', style: { colors: ['#fff'] }, offsetX: 0 },
     xaxis: { 
-        categories: props.airlineStats.map(s => s.name), // Categories usually go here for bars
+        categories: computedAirlineStats.value.map(s => s.name),
         labels: { 
             style: { colors: '#64748b' },
             formatter: (val) => Math.floor(val)
         }
     },
     yaxis: { 
-        // In horizontal mode, Y-axis is the category axis on the left
         labels: { 
             show: true,
             style: { colors: '#64748b', fontSize: '11px', fontWeight: 700 },
-            maxWidth: 200 // Ensure enough space for long names
+            maxWidth: 200 
         } 
     },
-    colors: props.airlineStats.map(s => s.color || '#3b82f6'),
+    colors: computedAirlineStats.value.map(s => s.color || '#3b82f6'),
     legend: { show: false },
     grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
     tooltip: { 
@@ -109,12 +182,10 @@ const airlineChartOptions = computed(() => ({
 
 const airlineSeries = computed(() => [{
     name: 'Frekuensi',
-    data: props.airlineStats.map(s => {
-        return {
-            x: s.name, // Explicitly bind name to X
-            y: s.count
-        }
-    })
+    data: computedAirlineStats.value.map(s => ({
+        x: s.name, 
+        y: s.count
+    }))
 }]);
 
 // Upload Logic
@@ -161,9 +232,31 @@ const submit = () => {
 };
 
 const filteredReports = computed(() => {
-    if (!searchQuery.value) return props.reports;
-    const lower = searchQuery.value.toLowerCase();
-    return props.reports.filter(r => r.name.toLowerCase().includes(lower));
+    let result = props.reports;
+
+    // Search
+    if (searchQuery.value) {
+        const lower = searchQuery.value.toLowerCase();
+        result = result.filter(r => r.name.toLowerCase().includes(lower));
+    }
+
+    // Airport Filter
+    if (selectedAirport.value !== 'All') {
+        result = result.filter(r => 
+            r.locations.some(loc => loc.airport_id === selectedAirport.value)
+        );
+    }
+
+    // Airline Filter
+    if (selectedAirline.value !== 'All') {
+        result = result.filter(r => 
+            r.locations.some(loc => 
+                loc.airlines.some(airline => airline.id === selectedAirline.value)
+            )
+        );
+    }
+
+    return result;
 });
 
 // --- Action Methods ---
@@ -384,14 +477,7 @@ const zoomOut = () => { if (zoomLevel.value > 0.5) zoomLevel.value -= 0.25; };
                             </button>
                         </div>
                          <!-- Filter Dropdown (Glassy) -->
-                        <div class="relative w-full md:w-auto">
-                             <select class="w-full md:w-64 appearance-none rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md py-4 pl-4 pr-10 text-white shadow-xl focus:border-white/40 focus:bg-white/20 focus:ring-0 focus:outline-none transition-all cursor-pointer">
-                                <option class="text-gray-900">Laporan Hasil Pengawasan</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-blue-200">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                            </div>
-                        </div>
+                        <!-- Filter Dropdowns Removed -->
                     </div>
 
                     <!-- Category Title / Back Button -->
@@ -411,19 +497,41 @@ const zoomOut = () => { if (zoomLevel.value > 0.5) zoomLevel.value -= 0.25; };
                 <!-- Charts Section -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-gray-700 flex items-center gap-2 mb-4">
-                            <span class="w-1 h-5 bg-red-400 rounded-full"></span>
-                            Frekuensi Pengawasan Bandara
-                        </h3>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                            <h3 class="font-bold text-gray-700 flex items-center gap-2">
+                                <span class="w-1 h-5 bg-red-400 rounded-full"></span>
+                                Frekuensi Pengawasan Bandara
+                            </h3>
+                            <div class="relative w-full sm:w-40">
+                                <select v-model="selectedAirport" class="w-full appearance-none rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-3 pr-8 text-xs font-medium text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer">
+                                    <option value="All">All Airports</option>
+                                    <option v-for="airport in airports" :key="airport.id" :value="airport.id">{{ airport.name }}</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                </div>
+                            </div>
+                        </div>
                         <div class="h-64">
                              <apexchart :options="airportChartOptions" :series="airportSeries" height="100%" />
                         </div>
                     </div>
                      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-gray-700 flex items-center gap-2 mb-4">
-                            <span class="w-1 h-5 bg-blue-400 rounded-full"></span>
-                            Frekuensi Maskapai
-                        </h3>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                            <h3 class="font-bold text-gray-700 flex items-center gap-2">
+                                <span class="w-1 h-5 bg-blue-400 rounded-full"></span>
+                                Frekuensi Maskapai
+                            </h3>
+                             <div class="relative w-full sm:w-40">
+                                <select v-model="selectedAirline" class="w-full appearance-none rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-3 pr-8 text-xs font-medium text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer">
+                                    <option value="All">All Airlines</option>
+                                    <option v-for="airline in airlines" :key="airline.id" :value="airline.id">{{ airline.name }}</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                </div>
+                            </div>
+                        </div>
                          <div class="h-64">
                              <apexchart :options="airlineChartOptions" :series="airlineSeries" height="100%" />
                         </div>
@@ -476,7 +584,7 @@ const zoomOut = () => { if (zoomLevel.value > 0.5) zoomLevel.value -= 0.25; };
                                                 <div class="font-bold text-gray-700 mb-1.5">{{ loc.airport }}</div>
                                                 <div class="flex flex-wrap gap-1.5">
                                                     <span v-for="(airline, aIdx) in loc.airlines" :key="aIdx" class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-600 border border-blue-100">
-                                                        {{ airline }}
+                                                        {{ airline.name }}
                                                     </span>
                                                 </div>
                                             </div>
