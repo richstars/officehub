@@ -21,18 +21,18 @@ export default defineConfig({
             registerType: 'autoUpdate',
             injectRegister: 'auto',
             manifest: {
-                name: 'Internal Office Hub',
-                short_name: 'OfficeHub',
-                description: 'A lightning-fast internal office hub for employees.',
+                name: 'AIR TRANSPORT OTORITAS BANDARA WILAYAH VII',
+                short_name: 'AirTransportOtban7',
+                description: 'Portal Internal Otoritas Bandara Wilayah VII',
                 theme_color: '#4F46E5',
                 icons: [
                     {
-                        src: '/icons/icon-192x192.png',
+                        src: '/android-chrome-192x192.png',
                         sizes: '192x192',
                         type: 'image/png'
                     },
                     {
-                        src: '/icons/icon-512x512.png',
+                        src: '/android-chrome-512x512.png',
                         sizes: '512x512',
                         type: 'image/png'
                     }

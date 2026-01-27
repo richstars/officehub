@@ -25,10 +25,14 @@ const favorites = ref(JSON.parse(localStorage.getItem('office_hub_favorites') ||
 const showDownloadModal = ref(false);
 const downloadPassword = ref('');
 const selectedFileToDownload = ref(null);
+const selectedFileToPreview = ref(null);
+const showPreviewModal = ref(false);
+
+const fileCategories = ['General', 'HR', 'Finance', 'Flight Approval', 'Operations', 'IT', 'Marketing'];
 
 // --- Filtering & Computed ---
 const categories = computed(() => {
-    const cats = new Set(['All']);
+    const cats = new Set(['All', 'Flight Approval', 'General', 'HR', 'Finance', 'Operations', 'IT', 'Marketing']);
     props.links.forEach(l => cats.add(l.category));
     props.files.forEach(f => cats.add(f.category));
     return Array.from(cats);
@@ -97,6 +101,7 @@ const toolForm = useForm({
     url: '',
     category: 'Tools',
     icon: 'link',
+    icon_file: null,
     description: '',
 });
 
@@ -128,7 +133,10 @@ const openEditTool = (link) => {
 
 const submitTool = () => {
     if (editingTool.value) {
-        toolForm.put(route('links.update', editingTool.value.id), {
+        toolForm.transform((data) => ({
+            ...data,
+            _method: 'put',
+        })).post(route('links.update', editingTool.value.id), {
             onSuccess: () => {
                 showToolModal.value = false;
                 toolForm.reset();
@@ -246,10 +254,26 @@ const postDownload = (url, data) => {
     form.submit();
     document.body.removeChild(form);
 };
+
+const openPreview = (file) => {
+    selectedFileToPreview.value = file;
+    showPreviewModal.value = true;
+};
+
+const closePreview = () => {
+    showPreviewModal.value = false;
+    selectedFileToPreview.value = null;
+};
+
+const handleToolIconInput = (e) => {
+    if (e.target.files.length > 0) {
+        toolForm.icon_file = e.target.files[0];
+    }
+};
 </script>
 
 <template>
-    <Head title="Office Hub" />
+    <Head title="AIR TRANSPORT OTORITAS BANDARA WILAYAH VII" />
 
     <AuthenticatedLayout>
         <!-- Simple Functional Dashboard Design -->
@@ -276,7 +300,7 @@ const postDownload = (url, data) => {
 
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                         <div>
-                            <h1 class="text-4xl font-extrabold text-white tracking-tight drop-shadow-md">Office Dashboard</h1>
+                            <h1 class="text-4xl font-extrabold text-white tracking-tight drop-shadow-md">AIR TRANSPORT OTORITAS BANDARA WILAYAH VII</h1>
                             <p class="text-blue-100 text-sm mt-1 font-medium opacity-90">Welcome to your internal workspace.</p>
                         </div>
                         <div v-if="$page.props.auth.user" class="flex gap-3">
@@ -352,10 +376,13 @@ const postDownload = (url, data) => {
                                 </div>
 
                                 <a :href="link.url" target="_blank" class="flex flex-col items-center text-center h-full">
-                                    <div class="h-12 w-12 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                         <svg v-if="link.icon === 'envelope'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                        <svg v-else-if="link.icon === 'user-group'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                        <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                                    <div class="h-12 w-12 rounded-lg flex items-center justify-center mb-3 overflow-hidden group-hover:shadow-md transition-all">
+                                        <img v-if="link.icon_path" :src="'/storage/' + link.icon_path" alt="Icon" class="w-full h-full object-cover">
+                                        <div v-else class="h-full w-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                            <svg v-if="link.icon === 'envelope'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                            <svg v-else-if="link.icon === 'user-group'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                            <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                                        </div>
                                     </div>
                                     <h3 class="font-bold text-gray-900 text-sm mb-1">{{ link.title }}</h3>
                                     <p class="text-xs text-gray-500 line-clamp-2">{{ link.description }}</p>
@@ -408,6 +435,9 @@ const postDownload = (url, data) => {
                                         <p class="text-[10px] text-gray-400">{{ formatSize(file.size) }} • {{ formatDate(file.created_at) }}</p>
                                     </div>
                                     <div class="flex gap-1">
+                                         <button @click="openPreview(file)" class="text-green-600 hover:bg-green-50 p-1.5 rounded transition-colors" title="Preview">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                         </button>
                                          <button @click="triggerDownload(file)" class="text-blue-600 hover:bg-blue-50 p-1.5 rounded transition-colors" title="Download">
                                             <svg v-if="file.is_secure" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                                             <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -441,8 +471,32 @@ const postDownload = (url, data) => {
                             <input v-model="toolForm.category" type="text" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase">Icon</label>
-                            <select v-model="toolForm.icon" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            <label class="block text-xs font-bold text-gray-500 uppercase">Icon (Custom)</label>
+                            
+                            <div 
+                                @dragover.prevent="isDragging = true"
+                                @dragleave.prevent="isDragging = false"
+                                @drop.prevent="(e) => { isDragging = false; if(e.dataTransfer.files.length > 0) toolForm.icon_file = e.dataTransfer.files[0]; }"
+                                :class="[
+                                    'border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors mb-4',
+                                    isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-50'
+                                ]"
+                            >
+                                <input type="file" @change="handleToolIconInput" class="hidden" id="toolIconInput" accept="image/*">
+                                <label for="toolIconInput" class="cursor-pointer block">
+                                    <div v-if="!toolForm.icon_file" class="flex flex-col items-center">
+                                         <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        <span class="text-gray-500 text-xs">Drop image here or click to browse</span>
+                                    </div>
+                                    <div v-else class="flex items-center justify-center gap-2">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                        <span class="text-blue-600 font-bold text-sm block truncate max-w-[200px]">{{ toolForm.icon_file.name }}</span>
+                                    </div>
+                                </label>
+                            </div>
+                             
+                            <label class="block text-xs font-bold text-gray-500 uppercase">Or preset icon:</label>
+                            <select v-model="toolForm.icon" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 mt-1">
                                 <option value="link">General Link</option>
                                 <option value="envelope">Email</option>
                                 <option value="user-group">People/HR</option>
@@ -486,7 +540,9 @@ const postDownload = (url, data) => {
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase">Category</label>
-                            <input v-model="fileForm.category" type="text" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" required>
+                            <select v-model="fileForm.category" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" required>
+                                <option v-for="cat in fileCategories" :key="cat" :value="cat">{{ cat }}</option>
+                            </select>
                         </div>
                         
                         <!-- Secure Options -->
@@ -552,6 +608,24 @@ const postDownload = (url, data) => {
                             <button type="submit" class="flex-1 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm font-bold">Unlock & Download</button>
                         </div>
                     </form>
+                 </div>
+            </div>
+
+            <!-- Preview Modal -->
+            <div v-if="showPreviewModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden relative">
+                    <button @click="closePreview" class="absolute top-4 right-4 bg-white/50 hover:bg-white p-2 rounded-full z-10 transition-colors">
+                         <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <div class="flex-1 bg-gray-100 flex items-center justify-center p-4">
+                        <iframe v-if="selectedFileToPreview && !selectedFileToPreview.is_secure" :src="'/storage/' + selectedFileToPreview.file_path" class="w-full h-full rounded shadow-sm border border-gray-200"></iframe>
+                        <div v-else class="text-center p-10">
+                            <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                            <h3 class="text-lg font-bold text-gray-700">Preview Unavailable</h3>
+                            <p class="text-gray-500">Secure files or unsupported types cannot be previewed.</p>
+                            <button @click="triggerDownload(selectedFileToPreview); closePreview()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Download Instead</button>
+                        </div>
+                    </div>
                  </div>
             </div>
 

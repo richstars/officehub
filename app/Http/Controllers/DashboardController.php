@@ -40,8 +40,14 @@ class DashboardController extends Controller
             'url' => 'required|url',
             'category' => 'required|string|max:255',
             'icon' => 'nullable|string',
+            'icon_file' => 'nullable|image|max:2048', // Max 2MB
             'description' => 'nullable|string',
         ]);
+
+        if ($request->hasFile('icon_file')) {
+            $path = $request->file('icon_file')->store('icons', 'public');
+            $validated['icon_path'] = $path;
+        }
 
         Link::create($validated);
 
@@ -59,8 +65,18 @@ class DashboardController extends Controller
             'url' => 'required|url',
             'category' => 'required|string|max:255',
             'icon' => 'nullable|string',
+            'icon_file' => 'nullable|image|max:2048',
             'description' => 'nullable|string',
         ]);
+
+        if ($request->hasFile('icon_file')) {
+            // Delete old icon if exists
+            if ($link->icon_path && \Storage::disk('public')->exists($link->icon_path)) {
+                \Storage::disk('public')->delete($link->icon_path);
+            }
+            $path = $request->file('icon_file')->store('icons', 'public');
+            $validated['icon_path'] = $path;
+        }
 
         $link->update($validated);
 

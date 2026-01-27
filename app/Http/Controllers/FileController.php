@@ -32,10 +32,17 @@ class FileController extends Controller
              return redirect()->route('dashboard')->with('restriction', 'You do not have permission to access the File Repository.');
         }
 
+        $query = File::orderBy('created_at', 'desc');
+        $category = $request->query('category');
+        if ($category) {
+            $query->where('category', $category);
+        }
+
         return Inertia::render('Files/Index', [
-            'files' => File::orderBy('created_at', 'desc')->get(),
+            'files' => $query->get(),
             'recentFiles' => File::orderBy('created_at', 'desc')->take(5)->get(),
             'totalStorageSize' => File::sum('size'),
+            'currentCategory' => $category, // Pass to frontend
         ]);
     }
 
