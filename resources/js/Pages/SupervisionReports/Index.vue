@@ -17,6 +17,7 @@ const props = defineProps({
 const searchQuery = ref('');
 const selectedAirport = ref('All');
 const selectedAirline = ref('All');
+const selectedYear = ref('All'); // Year Filter State
 const showUploadModal = ref(false);
 const isDragging = ref(false);
 
@@ -256,7 +257,36 @@ const filteredReports = computed(() => {
         );
     }
 
+    // Year Filter
+    if (selectedYear.value !== 'All') {
+        result = result.filter(r => {
+             // Extract year from start_date (YYYY-MM-DD or similar)
+            return r.start_date.startsWith(selectedYear.value);
+        });
+    }
+
     return result;
+});
+
+// Extract unique years from reports for the dropdown, ensuring 2025 is the starting point
+const availableYears = computed(() => {
+    const years = new Set();
+    
+    // Add years from reports
+    props.reports.forEach(r => {
+        const y = parseInt(r.start_date.substring(0, 4));
+        if (!isNaN(y)) years.add(y);
+    });
+
+    // Ensure 2025 to Current Year are always available
+    const startYear = 2025;
+    const currentYear = new Date().getFullYear();
+    
+    for (let y = startYear; y <= currentYear; y++) {
+        years.add(y);
+    }
+
+    return Array.from(years).sort().reverse();
 });
 
 // --- Action Methods ---
@@ -475,7 +505,20 @@ const zoomOut = () => { if (zoomLevel.value > 0.5) zoomLevel.value -= 0.25; };
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </button>
+
                         </div>
+                        
+                        <!-- Year Filter -->
+                        <div class="relative w-full md:w-32">
+                             <select v-model="selectedYear" class="w-full appearance-none rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md py-4 pl-4 pr-10 text-white shadow-xl focus:border-white/40 focus:bg-white/20 focus:ring-0 focus:outline-none transition-all cursor-pointer">
+                                <option class="text-gray-900" value="All">All Years</option>
+                                <option v-for="year in availableYears" :key="year" :value="year" class="text-gray-900">{{ year }}</option>
+                            </select>
+                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-blue-200">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </div>
+                        </div>
+
                          <!-- Filter Dropdown (Glassy) -->
                         <!-- Filter Dropdowns Removed -->
                     </div>
@@ -548,12 +591,12 @@ const zoomOut = () => { if (zoomLevel.value > 0.5) zoomLevel.value -= 0.25; };
                         <table class="w-full text-left text-sm text-gray-600">
                             <thead class="bg-gray-50 text-xs uppercase font-semibold text-gray-500">
                                 <tr>
-                                    <th class="px-6 py-4">Name</th>
-                                    <th class="px-6 py-4">Tanggal Pengawasan</th>
-                                    <th class="px-6 py-4">Lokasi & Maskapai</th>
-                                    <th class="px-6 py-4">Size</th>
-                                    <th class="px-6 py-4">Modified</th>
-                                    <th class="px-6 py-4 text-right">Actions</th>
+                                    <th class="px-6 py-4 w-[150px]">Name</th>
+                                    <th class="px-6 py-4 w-[140px]">Tanggal Pengawasan</th>
+                                    <th class="px-6 py-4 w-auto">Lokasi & Maskapai</th>
+                                    <th class="px-6 py-4 w-[100px]">Size</th>
+                                    <th class="px-6 py-4 w-[140px]">Modified</th>
+                                    <th class="px-6 py-4 text-right w-[100px]">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
@@ -567,7 +610,7 @@ const zoomOut = () => { if (zoomLevel.value > 0.5) zoomLevel.value -= 0.25; };
                                                 </span>
                                             </div>
                                             <div class="flex flex-col">
-                                                <span>{{ report.name }}</span>
+                                                <span class="truncate max-w-[100px] block" :title="report.name">{{ report.name }}</span>
                                                 <span v-if="report.is_secure" class="text-[10px] text-orange-500 font-bold flex items-center gap-1">
                                                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                                                     SECURE
