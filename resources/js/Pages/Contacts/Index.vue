@@ -19,7 +19,7 @@ const isEditing = ref(false);
 const form = useForm({
     _method: 'POST', // Default, will override for PUT
     name: '',
-    department: '',
+    // department removed
     position: '',
     employee_id: '',
     email: '',
@@ -106,7 +106,7 @@ const openEditModal = (contact) => {
     
     // Populate Form
     form.name = contact.name;
-    form.department = contact.department;
+    // department removed
     form.position = contact.position;
     form.employee_id = contact.employee_id;
     form.email = contact.email;
@@ -264,7 +264,7 @@ const handlePhotoInput = (e) => {
                                         </div>
                                         <div>
                                             <div class="font-medium text-gray-900">{{ contact.name }}</div>
-                                            <div class="text-[10px] text-gray-500">{{ contact.department }}</div>
+                                            <!-- department removed -->
                                         </div>
                                     </div>
                                 </td>
@@ -347,48 +347,35 @@ const handlePhotoInput = (e) => {
                             required
                         >
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                             <label class="block text-xs font-bold text-gray-500 uppercase">Profile Photo</label>
-                             <div 
-                                @dragover.prevent="isDragging = true"
-                                @dragleave.prevent="isDragging = false"
-                                @drop.prevent="(e) => { isDragging = false; if(e.dataTransfer.files.length > 0) form.photo = e.dataTransfer.files[0]; }"
-                                :class="[
-                                    'border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors',
-                                    isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-50'
-                                ]"
-                            >
-                                <input type="file" @change="handlePhotoInput" class="hidden" id="photoInput" accept="image/*">
-                                <label for="photoInput" class="cursor-pointer block">
-                                    <div v-if="!form.photo" class="flex flex-col items-center">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Profile Photo</label>
+                        <div 
+                            @dragover.prevent="isDragging = true"
+                            @dragleave.prevent="isDragging = false"
+                            @drop.prevent="(e) => { isDragging = false; if(e.dataTransfer.files.length > 0) form.photo = e.dataTransfer.files[0]; }"
+                            :class="[
+                                'border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors',
+                                isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-50'
+                            ]"
+                        >
+                            <input type="file" @change="handlePhotoInput" class="hidden" id="photoInput" accept="image/*">
+                            <label for="photoInput" class="cursor-pointer block">
+                                <div v-if="!form.photo" class="flex flex-col items-center">
                                          <svg class="w-6 h-6 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                        <span class="text-gray-400 text-[10px]">Drop image or browse</span>
-                                    </div>
-                                    <div v-else class="flex items-center justify-center gap-2">
-                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                                        <span class="text-blue-600 font-bold text-xs block truncate max-w-[120px]">{{ form.photo.name }}</span>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase">Employee ID</label>
-                            <input v-model="form.employee_id" type="text" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                    <span class="text-gray-400 text-[10px]">Drop image or browse</span>
+                                </div>
+                                <div v-else class="flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                    <span class="text-blue-600 font-bold text-xs block truncate max-w-[120px]">{{ form.photo.name }}</span>
+                                </div>
+                            </label>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase">Department</label>
-                        <select v-model="form.department" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" required>
-                            <option value="" disabled>Select Department</option>
-                            <option value="HR">HR</option>
-                            <option value="Finance">Finance</option>
-                            <option value="IT">IT</option>
-                            <option value="Operations">Operations</option>
-                            <option value="Marketing">Marketing</option>
-                            <option value="Sales">Sales</option>
-                        </select>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Employee ID</label>
+                        <input v-model="form.employee_id" type="text" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
                     </div>
+                    <!-- Department Field Removed -->
                      <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase">Position</label>
                         <input v-model="form.position" type="text" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" required>

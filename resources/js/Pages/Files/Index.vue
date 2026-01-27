@@ -29,14 +29,15 @@ const excelContainer = ref(null);
 const isRenderingOffice = ref(false);
 const officeError = ref(null);
 
-const fileCategories = ['Laporan Tahunan', 'Laporan Bulanan', 'SOP', 'Laporan Hasil Pengawasan', 'Surat Perintah Tugas'];
+const fileCategories = ['Laporan Tahunan', 'Laporan Bulanan', 'SOP', 'Laporan Hasil Pengawasan', 'Surat Perintah Tugas', 'Flight Approval'];
 
 const categoryIcons = {
     'Laporan Tahunan': 'calendar',
     'Laporan Bulanan': 'document-text',
     'SOP': 'clipboard-check',
     'Laporan Hasil Pengawasan': 'shield-check',
-    'Surat Perintah Tugas': 'briefcase'
+    'Surat Perintah Tugas': 'briefcase',
+    'Flight Approval': 'paper-airplane'
 };
 
 const categoryColors = {
@@ -44,7 +45,8 @@ const categoryColors = {
     'Laporan Bulanan': 'text-emerald-500 bg-emerald-50',
     'SOP': 'text-violet-500 bg-violet-50',
     'Laporan Hasil Pengawasan': 'text-red-500 bg-red-50',
-    'Surat Perintah Tugas': 'text-amber-500 bg-amber-50'
+    'Surat Perintah Tugas': 'text-amber-500 bg-amber-50',
+    'Flight Approval': 'text-sky-500 bg-sky-50'
 };
 
 const fileForm = useForm({
@@ -59,7 +61,7 @@ const fileForm = useForm({
 const downloadPassword = ref('');
 const selectedFileToDownload = ref(null);
 
-const displayFolders = ['Laporan Tahunan', 'Laporan Bulanan', 'SOP', 'Laporan Hasil Pengawasan', 'Surat Perintah Tugas'];
+const displayFolders = ['Laporan Tahunan', 'Laporan Bulanan', 'SOP', 'Laporan Hasil Pengawasan', 'Surat Perintah Tugas', 'Flight Approval'];
 
 const categories = computed(() => {
     return ['All', ...displayFolders];
@@ -381,6 +383,7 @@ const zoomOut = () => {
                              <svg v-else-if="categoryIcons[cat] === 'shield-check'" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                              <svg v-else-if="categoryIcons[cat] === 'briefcase'" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                              <svg v-else-if="categoryIcons[cat] === 'folder-open'" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" /></svg>
+                             <svg v-else-if="categoryIcons[cat] === 'paper-airplane'" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                              <!-- Fallback/Default Icons -->
                              <svg v-else class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
                         </div>

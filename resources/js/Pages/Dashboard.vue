@@ -339,21 +339,8 @@ const handleToolIconInput = (e) => {
 
             <div class="mx-auto max-w-7xl px-4 mt-8">
                 <!-- Category Tabs -->
-                <div class="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                     <button 
-                        v-for="cat in categories" 
-                        :key="cat"
-                        @click="selectedCategory = cat"
-                        :class="[
-                            'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
-                            selectedCategory === cat 
-                                ? 'bg-blue-800 text-white shadow-md' 
-                                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-                        ]"
-                    >
-                        {{ cat }}
-                    </button>
-                </div>
+                <!-- Category Tabs Removed -->
+                <div class="hidden mb-6"></div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <!-- Main Tools Area -->
@@ -466,10 +453,7 @@ const handleToolIconInput = (e) => {
                             <label class="block text-xs font-bold text-gray-500 uppercase">URL</label>
                             <input v-model="toolForm.url" type="url" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" required>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase">Category</label>
-                            <input v-model="toolForm.category" type="text" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" required>
-                        </div>
+                        <!-- Category Field Removed -->
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase">Icon (Custom)</label>
                             
