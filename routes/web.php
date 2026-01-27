@@ -21,6 +21,7 @@ Route::middleware(['auth'])->group(function () {
     
     Route::post('/files', [\App\Http\Controllers\FileController::class, 'store'])->name('files.store');
     Route::post('/files/{file}/download', [\App\Http\Controllers\FileController::class, 'download'])->name('files.download');
+    Route::post('/files/{file}/verify-password', [\App\Http\Controllers\FileController::class, 'verifyPassword'])->name('files.verify-password');
     Route::delete('/files/{file}', [\App\Http\Controllers\FileController::class, 'destroy'])->name('files.destroy');
     
     Route::post('/announcements', [DashboardController::class, 'storeAnnouncement'])->name('announcements.store');
@@ -30,6 +31,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/contacts', [\App\Http\Controllers\ContactController::class, 'store'])->name('contacts.store');
     Route::put('/contacts/{contact}', [\App\Http\Controllers\ContactController::class, 'update'])->name('contacts.update');
     Route::delete('/contacts/{contact}', [\App\Http\Controllers\ContactController::class, 'destroy'])->name('contacts.destroy');
+
+    // Supervision Reports
+    Route::get('/supervision-reports', [\App\Http\Controllers\SupervisionReportController::class, 'index'])->name('supervision-reports.index');
+    Route::post('/supervision-reports', [\App\Http\Controllers\SupervisionReportController::class, 'store'])->name('supervision-reports.store');
+    Route::post('/supervision-reports/{report}/download', [\App\Http\Controllers\SupervisionReportController::class, 'download'])->name('supervision-reports.download');
+    Route::post('/supervision-reports/{report}/verify-password', [\App\Http\Controllers\SupervisionReportController::class, 'verifyPassword'])->name('supervision-reports.verify-password');
+    Route::delete('/supervision-reports/{report}', [\App\Http\Controllers\SupervisionReportController::class, 'destroy'])->name('supervision-reports.destroy');
 });
 
 Route::get('/contacts', [\App\Http\Controllers\ContactController::class, 'index'])->name('contacts.index');

@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 
 use Illuminate\Support\Facades\Hash;
+use App\Models\SupervisionReport;
 
 class FileController extends Controller
 {
@@ -32,17 +33,49 @@ class FileController extends Controller
              return redirect()->route('dashboard')->with('restriction', 'You do not have permission to access the File Repository.');
         }
 
-        $query = File::orderBy('created_at', 'desc');
         $category = $request->query('category');
+
+        // Fetch Files
+        $filesQuery = File::orderBy('created_at', 'desc');
         if ($category) {
-            $query->where('category', $category);
+            $filesQuery->where('category', $category);
+        }
+        $files = $filesQuery->get()->map(function ($file) {
+            $file->source = 'file';
+            return $file;
+        });
+
+        // Fetch Supervision Reports (only if category matches or no category selected)
+        $reports = collect([]);
+        if (!$category || $category === 'Laporan Hasil Pengawasan') {
+            $reports = SupervisionReport::orderBy('created_at', 'desc')->get()->map(function ($report) {
+                return (object) [
+                    'id' => $report->id,
+                    'display_name' => $report->name,
+                    'category' => 'Laporan Hasil Pengawasan',
+                    'description' => "Pengawasan: " . ($report->start_date ? $report->start_date->format('d M Y') : '-') . " - " . ($report->end_date ? $report->end_date->format('d M Y') : '-'),
+                    'file_path' => $report->file_path,
+                    'size' => $report->file_size,
+                    'is_secure' => $report->is_secure,
+                    'password' => $report->password,
+                    'created_at' => $report->created_at,
+                    'updated_at' => $report->updated_at,
+                    'source' => 'supervision_report',
+                ];
+            });
         }
 
+        // Merge and Sort
+        $allFiles = $files->concat($reports)->sortByDesc('created_at')->values();
+
+        // Calculate Access stats (approximate)
+        $totalSize = File::sum('size') + SupervisionReport::sum('file_size');
+
         return Inertia::render('Files/Index', [
-            'files' => $query->get(),
-            'recentFiles' => File::orderBy('created_at', 'desc')->take(5)->get(),
-            'totalStorageSize' => File::sum('size'),
-            'currentCategory' => $category, // Pass to frontend
+            'files' => $allFiles,
+            'recentFiles' => $allFiles->take(5), // Use the merged list for recent
+            'totalStorageSize' => $totalSize,
+            'currentCategory' => $category,
         ]);
     }
 
@@ -128,5 +161,21 @@ class FileController extends Controller
         }
         $file->delete();
         return back()->with('success', 'File deleted successfully!');
+    }
+    public function verifyPassword(Request $request, File $file)
+    {
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        if (!$file->is_secure) {
+            return response()->json(['valid' => true]);
+        }
+
+        if (Hash::check($request->password, $file->password)) {
+            return response()->json(['valid' => true]);
+        }
+
+        return response()->json(['valid' => false], 403);
     }
 }

@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage, router } from '@inertiajs/vue3';
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
@@ -60,6 +60,8 @@ const fileForm = useForm({
 
 const downloadPassword = ref('');
 const selectedFileToDownload = ref(null);
+const actionType = ref('download');
+const isPasswordVerified = ref(false);
 
 const displayFolders = ['Laporan Tahunan', 'Laporan Bulanan', 'SOP', 'Laporan Hasil Pengawasan', 'Surat Perintah Tugas', 'Flight Approval'];
 
@@ -68,6 +70,10 @@ const categories = computed(() => {
 });
 
 const selectFolder = (category) => {
+    if (category === 'Laporan Hasil Pengawasan') {
+        router.visit(route('supervision-reports.index'));
+        return;
+    }
     selectedCategory.value = category;
     isFolderView.value = false;
 };
@@ -136,11 +142,19 @@ const submitFile = () => {
     });
 };
 
-const deleteFile = (id) => {
+const deleteFile = (file) => {
     if (confirm('Are you sure you want to delete this file?')) {
-        useForm({}).delete(route('files.destroy', id));
+        const url = file.source === 'supervision_report'
+            ? route('supervision-reports.destroy', file.id)
+            : route('files.destroy', file.id);
+            
+        useForm({}).delete(url, {
+            preserveScroll: true,
+        });
     }
 };
+
+
 
 const handleFileDrop = (e) => {
     isDragging.value = false;
@@ -161,23 +175,60 @@ const processFile = (file) => {
 };
 
 const triggerDownload = (file) => {
+    selectedFileToDownload.value = file;
     if (file.is_secure) {
-        selectedFileToDownload.value = file;
-        downloadPassword.value = '';
         showDownloadModal.value = true;
+        downloadPassword.value = '';
+        actionType.value = 'download';
     } else {
-        postDownload(route('files.download', file.id), {});
+        const url = file.source === 'supervision_report' 
+            ? route('supervision-reports.download', file.id)
+            : route('files.download', file.id);
+        postDownload(url, {});
     }
 };
 
-const submitDownload = () => {
+const submitDownload = async () => {
     if (!selectedFileToDownload.value) return;
-    postDownload(route('files.download', selectedFileToDownload.value.id), {
-        password: downloadPassword.value
-    });
-    showDownloadModal.value = false;
-    downloadPassword.value = '';
-    selectedFileToDownload.value = null;
+
+    const file = selectedFileToDownload.value;
+    const isReport = file.source === 'supervision_report';
+
+    if (actionType.value === 'download') {
+        const url = isReport 
+            ? route('supervision-reports.download', file.id)
+            : route('files.download', file.id);
+            
+        postDownload(url, {
+            password: downloadPassword.value
+        });
+        showDownloadModal.value = false;
+        downloadPassword.value = '';
+        selectedFileToDownload.value = null;
+    } else if (actionType.value === 'preview') {
+        const url = isReport 
+            ? route('supervision-reports.verify-password', file.id)
+            : route('files.verify-password', file.id);
+
+        try {
+            await window.axios.post(url, {
+                password: downloadPassword.value
+            });
+            // Password correct
+            showDownloadModal.value = false;
+            downloadPassword.value = '';
+            selectedFileToDownload.value = null;
+            isPasswordVerified.value = true;
+            
+            // Proceed to preview
+            openPreview(file);
+            isPasswordVerified.value = false;
+
+        } catch (error) {
+            alert('Incorrect password.');
+            downloadPassword.value = '';
+        }
+    }
 };
 
 const postDownload = (url, data) => {
@@ -220,8 +271,20 @@ const previewType = computed(() => {
 });
 
 const openPreview = async (file) => {
+    if (file.is_secure && !isPasswordVerified.value) { // Assuming we track verification per session or just prompt every time.
+         // Actually, let's just use the same pattern: Prompt every time for now or reuse the modal.
+         // Since Files/Index doesn't have 'actionType' yet, we need to add it or adapt.
+         // But simplicity: prompt every time if secured.
+         selectedFileToDownload.value = file;
+         downloadPassword.value = '';
+         actionType.value = 'preview';
+         showDownloadModal.value = true;
+         return;
+    }
+
     selectedFileToPreview.value = file;
-    zoomLevel.value = 1; // Reset zoom
+    // ... existing logic
+    zoomLevel.value = 1;
     showPreviewModal.value = true;
     officeError.value = null;
 
@@ -232,24 +295,14 @@ const openPreview = async (file) => {
             if (!response.ok) throw new Error('Failed to load file');
             const blob = await response.blob();
 
-            await nextTick(); // Wait for DOM update to ensure containers exist
+            await nextTick();
 
             if (previewType.value === 'word') {
                  if (docxContainer.value) {
-                    docxContainer.value.innerHTML = ''; // Clear previous content
+                    docxContainer.value.innerHTML = '';
                     await renderAsync(blob, docxContainer.value, docxContainer.value, {
                         className: 'docx-preview',
-                        inWrapper: true,
-                        ignoreWidth: false,
-                        ignoreHeight: false,
-                        ignoreFonts: false,
-                        breakPages: true,
-                        ignoreLastRenderedPageBreak: true,
-                        experimental: false,
-                        trimXmlDeclaration: true,
-                        useBase64URL: false,
-                        useMathMLPolyfill: false,
-                        debug: false,
+                        inWrapper: true
                     });
                 }
             } else if (previewType.value === 'excel') {
@@ -264,7 +317,7 @@ const openPreview = async (file) => {
             }
         } catch (error) {
             console.error('Error rendering office file:', error);
-            officeError.value = "Failed to render preview. The file might be corrupted or in an unsupported format.";
+            officeError.value = "Failed to render preview.";
         } finally {
             isRenderingOffice.value = false;
         }
@@ -509,7 +562,7 @@ const zoomOut = () => {
                                     </button>
                                     <button 
                                         v-if="$page.props.auth.user"
-                                        @click="deleteFile(file.id)"
+                                        @click="deleteFile(file)"
                                         class="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded-full transition-colors"
                                         title="Delete"
                                     >
@@ -532,7 +585,7 @@ const zoomOut = () => {
                         class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all group relative aspect-square flex flex-col"
                     >
                         <div class="absolute top-2 right-2 z-10 flex gap-1" v-if="$page.props.auth.user">
-                            <button @click="deleteFile(file.id)" class="opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full p-1 text-red-500 hover:bg-red-50 border border-gray-200 shadow-sm">
+                            <button @click="deleteFile(file)" class="opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full p-1 text-red-500 hover:bg-red-50 border border-gray-200 shadow-sm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
                         </div>
@@ -656,7 +709,9 @@ const zoomOut = () => {
                         >
                         <div class="flex gap-2">
                             <button type="button" @click="showDownloadModal = false; selectedFileToDownload = null" class="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm">Cancel</button>
-                            <button type="submit" class="flex-1 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm font-bold">Unlock & Download</button>
+                            <button type="submit" class="flex-1 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm font-bold">
+                            {{ actionType === 'preview' ? 'Unlock & Preview' : 'Unlock & Download' }}
+                        </button>
                         </div>
                     </form>
                  </div>
@@ -670,9 +725,9 @@ const zoomOut = () => {
                     <div class="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/10">
                         <h3 class="text-white font-medium truncate max-w-md">{{ selectedFileToPreview?.display_name }}</h3>
                         <div class="flex items-center gap-3">
-                             <a :href="'/files/' + selectedFileToPreview?.id + '/download'" v-if="!selectedFileToPreview?.is_secure" download class="text-gray-400 hover:text-white transition-colors" title="Download">
+                             <button @click="triggerDownload(selectedFileToPreview)" class="text-gray-400 hover:text-white transition-colors" title="Download">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                             </a>
+                             </button>
                             <button @click="closePreview" class="text-gray-400 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-1.5">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
