@@ -37,7 +37,7 @@ class SupervisionReportController extends Controller
                 return [
                     'id' => $report->id,
                     'name' => $report->name,
-                    'file_path' => Storage::url($report->file_path),
+                    'file_path' => Storage::disk('public')->url($report->file_path),
                     'file_size' => $this->formatSize($report->file_size),
                     'start_date' => $report->start_date->format('Y-m-d'),
                     'end_date' => $report->end_date->format('Y-m-d'),
@@ -139,13 +139,17 @@ class SupervisionReportController extends Controller
             }
         }
 
-        return Storage::download($report->file_path, $report->name . '.' . pathinfo($report->file_path, PATHINFO_EXTENSION));
+        if (!Storage::disk('public')->exists($report->file_path)) {
+            return back()->withErrors(['file' => 'File not found on server.']);
+        }
+
+        return Storage::disk('public')->download($report->file_path, $report->name . '.' . pathinfo($report->file_path, PATHINFO_EXTENSION));
     }
 
     public function destroy(SupervisionReport $report)
     {
-        if (Storage::exists($report->file_path)) {
-            Storage::delete($report->file_path);
+        if (Storage::disk('public')->exists($report->file_path)) {
+            Storage::disk('public')->delete($report->file_path);
         }
         $report->delete();
 
