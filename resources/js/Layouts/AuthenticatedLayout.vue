@@ -37,7 +37,7 @@ onMounted(() => {
                 <div class="flex h-16 justify-between items-center">
                     <div class="flex items-center gap-8">
                         <Link :href="route('dashboard')">
-                             <img src="/images/navbar-logo.png" class="h-12 w-auto object-contain" alt="Logo" />
+                             <img src="/images/navbar-logo2.png" class="h-12 w-auto object-contain" alt="Logo" />
                         </Link>
                         <div class="flex gap-4">
                             <Link :href="route('dashboard')" :class="[route().current('dashboard') ? 'text-blue-800 font-bold' : 'text-gray-500 hover:text-gray-700']" class="text-sm">
