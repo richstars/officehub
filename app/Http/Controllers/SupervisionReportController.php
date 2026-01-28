@@ -94,7 +94,7 @@ class SupervisionReportController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'file' => 'required|file|max:10240', // 10MB
+            'file' => 'required|file',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'is_secure' => 'boolean',

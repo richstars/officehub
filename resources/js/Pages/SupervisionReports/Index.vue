@@ -688,14 +688,24 @@ const zoomOut = () => { if (zoomLevel.value > 0.5) zoomLevel.value -= 0.25; };
                                 isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-50'
                             ]"
                         >
-                            <input type="file" @change="handleFileInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" id="fileInput">
-                            <div class="flex flex-col items-center pointer-events-none">
-                                <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                            <div v-if="form.processing" class="flex flex-col items-center justify-center p-4">
+                                <svg class="animate-spin h-10 w-10 text-blue-600 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                               </svg>
+                               <span class="text-sm font-bold text-gray-700">Uploading Report...</span>
+                               <span v-if="form.progress" class="text-xs text-gray-500 font-mono mt-1">{{ form.progress.percentage }}%</span>
+                            </div>
+                            <div v-else>
+                                <input type="file" @change="handleFileInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" id="fileInput">
+                                <div class="flex flex-col items-center pointer-events-none">
+                                    <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                                    </div>
+                                    <span v-if="!form.file" class="text-sm font-medium text-gray-600">Click to browse or drag file here</span>
+                                    <span v-else class="text-sm font-bold text-blue-600 truncate max-w-[200px]">{{ form.file.name }}</span>
+                                    <span class="text-xs text-gray-400 mt-1">Supported files: PDF, DOC, ZIP, APK, Images</span>
                                 </div>
-                                <span v-if="!form.file" class="text-sm font-medium text-gray-600">Click to browse or drag file here</span>
-                                <span v-else class="text-sm font-bold text-blue-600 truncate max-w-[200px]">{{ form.file.name }}</span>
-                                <span class="text-xs text-gray-400 mt-1">Supported files: PDF, DOC, ZIP, APK, Images</span>
                             </div>
                         </div>
 

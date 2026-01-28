@@ -40,7 +40,7 @@ class DashboardController extends Controller
             'url' => 'required|url',
             'category' => 'required|string|max:255',
             'icon' => 'nullable|string',
-            'icon_file' => 'nullable|image|max:2048', // Max 2MB
+            'icon_file' => 'nullable|image',
             'description' => 'nullable|string',
         ]);
 
@@ -65,7 +65,7 @@ class DashboardController extends Controller
             'url' => 'required|url',
             'category' => 'required|string|max:255',
             'icon' => 'nullable|string',
-            'icon_file' => 'nullable|image|max:2048',
+            'icon_file' => 'nullable|image',
             'description' => 'nullable|string',
         ]);
 
